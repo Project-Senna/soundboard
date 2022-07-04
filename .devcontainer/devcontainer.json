@@ -29,7 +29,8 @@
 				"oderwat.indent-rainbow",
 				"wix.vscode-import-cost",
 				"cschleiden.vscode-github-actions",
-				"ms-azuretools.vscode-docker"
+				"ms-azuretools.vscode-docker",
+				"mrmlnc.vscode-json5"
 			]
 		}
 	},

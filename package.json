@@ -1,0 +1,29 @@
+{
+  "name": "soundboard",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "parcel --config=./etc/parcel.json5 src/index.html",
+    "build": "parcel build --config=./etc/parcel.json5 src/index.html",
+    "check:types": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Project-Rabia/soundboard.git"
+  },
+  "author": "",
+  "license": "Unlicense",
+  "bugs": {
+    "url": "https://github.com/Project-Rabia/soundboard/issues"
+  },
+  "homepage": "https://github.com/Project-Rabia/soundboard#readme",
+  "devDependencies": {
+    "@parcel/compressor-brotli": "^2.6.2",
+    "@parcel/compressor-gzip": "^2.6.2",
+    "@parcel/transformer-typescript-tsc": "^2.6.2",
+    "lit": "^2.2.7",
+    "parcel": "^2.6.2",
+    "typescript": "^4.7.4"
+  }
+}
