@@ -137,6 +137,12 @@ export class AppContainer extends LitElement {
       this.queue = [];
     }
 
+    speakQueue() {
+      const msg = new SpeechSynthesisUtterance();
+      msg.text = this.queue.join(' ');
+      window.speechSynthesis.speak(msg);
+    }
+
     async initializeWordDatabase(): Promise<TemplateResult> {
       const db = await wordDatabase;
 
@@ -192,10 +198,9 @@ export class AppContainer extends LitElement {
           <section class="queue">
                 ${this.queue.join(' ')}
           </section>
-          <button>Speak</button>
+          <button @click="${this.speakQueue}">Speak</button>
           <button @click="${this.removeLastWordInQueue}">Delete</button> <!-- Remove last word -->
           <button @click="${this.clearQueue}">Trash</button> <!-- Remove all words in queue -->
-          <button>Settings</button>
         </header>
         <main class="word-list">
           ${until(this.renderWords(), html`<span>Loading words...</span>`)}
