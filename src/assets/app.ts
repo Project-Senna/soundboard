@@ -1,17 +1,25 @@
 import {
-  LitElement, 
+  LitElement,
   html,
   css,
-  TemplateResult,
+  type TemplateResult,
 } from 'lit';
 import {
-  customElement, 
-  property, 
+  customElement,
+  property,
   state,
 } from 'lit/decorators.js';
 import {
   until,
 } from 'lit/directives/until.js';
+import {
+  ref,
+  createRef,
+  type Ref,
+} from 'lit/directives/ref.js';
+import {repeat} from 'lit/directives/repeat.js';
+import { v4 as uuidv4 } from 'uuid';
+import {produce, Immutable} from "immer";
 import {
   wordDatabase,
 } from './wordDb';
@@ -94,6 +102,43 @@ const initialWords = [
         'swimming',
     ];
 
+@customElement('queue-container')
+class QueueContainer extends LitElement {
+  @state()
+  private value: Immutable<string[]> = [];
+
+  get phrase(): string {
+    return this.value.join(' ');
+  }
+
+  addWord(word: string): void {
+    this.value = produce(this.value, (draft) => {
+      draft.push(word);
+    });
+  }
+
+  removeLastWordInQueue() {
+    this.value = produce(this.value, (draft) => {
+      draft.pop();
+    });
+  }
+
+  clearQueue() {
+    this.value = produce(this.value, () => []);
+  }
+
+  render() {
+    return html`
+      <section class="queue">
+        ${repeat(
+          this.value ?? [],
+          () => uuidv4(),
+          (word) => html`${word} `,
+        )}
+      </section>`;
+  }
+}
+
 @customElement('app-container')
 export class AppContainer extends LitElement {
 
@@ -102,6 +147,10 @@ export class AppContainer extends LitElement {
         min-width: 44px;
         min-height: 20px;
         font-size: 20px;
+      }
+
+      button img {
+        pointer-events: none;
       }
 
       .queue {
@@ -120,26 +169,16 @@ export class AppContainer extends LitElement {
       }
     `;
 
-    @state()
-    protected queue: string[] = [];
+    protected queue: Ref<QueueContainer> = createRef();
 
-    addWordToQueue(event: MouseEvent) {
+    addWordToQueue = (event: MouseEvent) => {
       const target = event.target as HTMLButtonElement;
-      this.queue = [...this.queue, target.textContent.trim()];
-    }
-
-    removeLastWordInQueue() {
-      this.queue.pop();
-      this.queue = [...this.queue];
-    }
-
-    clearQueue() {
-      this.queue = [];
+      this.queue.value.addWord(target.textContent.trim());
     }
 
     speakQueue() {
       const msg = new SpeechSynthesisUtterance();
-      msg.text = this.queue.join(' ');
+      msg.text = this.queue.value.phrase;
       window.speechSynthesis.speak(msg);
     }
 
@@ -177,11 +216,11 @@ export class AppContainer extends LitElement {
           `);
           continue;
         }
-        
+
         buttonTemplates.push(html`
         <button
           @click="${this.addWordToQueue}">
-          <img 
+          <img
             src="${new URL('./images/swimmer.svg', import.meta.url)}"
             role="presentation" />
             ${word.label}
@@ -192,12 +231,20 @@ export class AppContainer extends LitElement {
       return buttonTemplates;
     }
 
+    removeLastWordInQueue() {
+      this.queue.value.removeLastWordInQueue();
+    }
+
+    clearQueue() {
+      this.queue.value.clearQueue();
+    }
+
     renderApp(): TemplateResult {
       return html`
         <header class="app-header">
-          <section class="queue">
-                ${this.queue.join(' ')}
-          </section>
+          <queue-container
+            ${ref(this.queue)}
+            .queue="${this.queue}"></queue-container>
           <button @click="${this.speakQueue}">Speak</button>
           <button @click="${this.removeLastWordInQueue}">Delete</button> <!-- Remove last word -->
           <button @click="${this.clearQueue}">Trash</button> <!-- Remove all words in queue -->
@@ -217,6 +264,7 @@ export class AppContainer extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "app-container": AppContainer;
+    'app-container': AppContainer;
+    'queue-container': QueueContainer;
   }
 }
