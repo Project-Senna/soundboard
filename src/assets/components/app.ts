@@ -2,12 +2,11 @@ import {
   LitElement,
   html,
   css,
+  svg,
   type TemplateResult,
 } from 'lit';
 import {
   customElement,
-  property,
-  state,
 } from 'lit/decorators.js';
 import {
   until,
@@ -17,131 +16,14 @@ import {
   createRef,
   type Ref,
 } from 'lit/directives/ref.js';
-import {repeat} from 'lit/directives/repeat.js';
-import { v4 as uuidv4 } from 'uuid';
-import {produce, Immutable} from "immer";
 import {
   wordDatabase,
-} from './wordDb';
-
-const initialWords = [
-        'I',
-        'you',
-        'we',
-        'he',
-        'she',
-        'they',
-        'it',
-        'this',
-        'that',
-        'the',
-        'a',
-        'is',
-        'can',
-        'will',
-        'do',
-        'don\'t',
-        'want',
-        'like',
-        'need',
-        'have',
-        'get',
-        'stop',
-        'go',
-        'come',
-        'take',
-        'give',
-        'eat',
-        'open',
-        'make',
-        'put',
-        'think',
-        'see',
-        'look',
-        'say',
-        'know',
-        'play',
-        'listen',
-        'tell',
-        'help',
-        'what',
-        'when',
-        'where',
-        'who',
-        'why',
-        'how',
-        'to',
-        'with',
-        'here',
-        'in',
-        'on',
-        'of',
-        'there',
-        'out',
-        'off',
-        'for',
-        'about',
-        'up',
-        'down',
-        'if',
-        'but',
-        'because',
-        'and',
-        'so',
-        'or',
-        'now',
-        'not',
-        'more',
-        'too',
-        'all done',
-        'good',
-        'bad',
-        'different',
-        'all',
-        'some',
-        'swimming',
-    ];
-
-@customElement('queue-container')
-class QueueContainer extends LitElement {
-  @state()
-  private value: Immutable<string[]> = [];
-
-  get phrase(): string {
-    return this.value.join(' ');
-  }
-
-  addWord(word: string): void {
-    this.value = produce(this.value, (draft) => {
-      draft.push(word);
-    });
-  }
-
-  removeLastWordInQueue() {
-    this.value = produce(this.value, (draft) => {
-      draft.pop();
-    });
-  }
-
-  clearQueue() {
-    this.value = produce(this.value, () => []);
-  }
-
-  render() {
-    return html`
-      <section class="queue">
-        ${repeat(
-          this.value ?? [],
-          () => uuidv4(),
-          (word) => html`${word} `,
-        )}
-      </section>`;
-  }
-}
+} from '../wordDb';
+import { initialWords } from '../words';
+import { QueueContainer } from './queue';
 
 @customElement('app-container')
 export class AppContainer extends LitElement {
-
     static styles = css`
       button {
         min-width: 44px;
@@ -151,6 +33,11 @@ export class AppContainer extends LitElement {
 
       button img {
         pointer-events: none;
+      }
+
+      .app-header {
+        display: flex;
+        justify-content: space-between;
       }
 
       .queue {
@@ -177,8 +64,12 @@ export class AppContainer extends LitElement {
     }
 
     speakQueue() {
+      const phrase = this.queue.value.phrase;
+      if (phrase === undefined) {
+        return;
+      }
       const msg = new SpeechSynthesisUtterance();
-      msg.text = this.queue.value.phrase;
+      msg.text = phrase;
       window.speechSynthesis.speak(msg);
     }
 
@@ -221,7 +112,7 @@ export class AppContainer extends LitElement {
         <button
           @click="${this.addWordToQueue}">
           <img
-            src="${new URL('./images/swimmer.svg', import.meta.url)}"
+            src="${new URL('../images/swimmer.svg', import.meta.url)}"
             role="presentation" />
             ${word.label}
           </button>
@@ -243,21 +134,50 @@ export class AppContainer extends LitElement {
       return html`
         <header class="app-header">
           <queue-container
-            ${ref(this.queue)}
-            .queue="${this.queue}"></queue-container>
-          <button @click="${this.speakQueue}">Speak</button>
-          <button @click="${this.removeLastWordInQueue}">Delete</button> <!-- Remove last word -->
-          <button @click="${this.clearQueue}">Trash</button> <!-- Remove all words in queue -->
+            ${ref(this.queue)}></queue-container>
+          <div>
+            <button @click="${this.speakQueue}">Speak</button>
+            <button @click="${this.removeLastWordInQueue}">Delete</button>
+            <button @click="${this.clearQueue}">Trash</button>
+          </div>
         </header>
         <main class="word-list">
-          ${until(this.renderWords(), html`<span>Loading words...</span>`)}
+          ${until(
+            this.renderWords(),
+            html`<span>Loading words...</span>`,
+          )}
         </main>
+      `;
+    }
+
+    renderLoadingSpinner() {
+      return svg`
+      <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45" stroke="#fff">
+    <g fill="none" fill-rule="evenodd" transform="translate(1 1)" stroke-width="2">
+        <circle cx="22" cy="22" r="6" stroke-opacity="0">
+            <animate attributeName="r" begin="1.5s" dur="3s" values="6;22" calcMode="linear" repeatCount="indefinite"/>
+            <animate attributeName="stroke-opacity" begin="1.5s" dur="3s" values="1;0" calcMode="linear" repeatCount="indefinite"/>
+            <animate attributeName="stroke-width" begin="1.5s" dur="3s" values="2;0" calcMode="linear" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="22" cy="22" r="6" stroke-opacity="0">
+            <animate attributeName="r" begin="3s" dur="3s" values="6;22" calcMode="linear" repeatCount="indefinite"/>
+            <animate attributeName="stroke-opacity" begin="3s" dur="3s" values="1;0" calcMode="linear" repeatCount="indefinite"/>
+            <animate attributeName="stroke-width" begin="3s" dur="3s" values="2;0" calcMode="linear" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="22" cy="22" r="8">
+            <animate attributeName="r" begin="0s" dur="1.5s" values="6;1;2;3;4;5;6" calcMode="linear" repeatCount="indefinite"/>
+        </circle>
+    </g>
+</svg>
       `;
     }
 
     override render() {
         return html`
-        ${until(this.initializeWordDatabase(), html`<span>Initializing...</span>`)}
+        ${until(
+          this.initializeWordDatabase(),
+          this.renderLoadingSpinner(),
+        )}
         `;
     }
 }
@@ -265,6 +185,5 @@ export class AppContainer extends LitElement {
 declare global {
   interface HTMLElementTagNameMap {
     'app-container': AppContainer;
-    'queue-container': QueueContainer;
   }
 }
